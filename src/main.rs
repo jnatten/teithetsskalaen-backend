@@ -1,12 +1,17 @@
+mod app;
+mod config;
+
 use anyhow::Context;
-use sqlx::Executor;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::Executor;
+use std::time::Instant;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let database_url = dotenvy::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    println!("Starting teithetsskalaen-backend");
+    let config = config::Config::from_env()?;
 
+    println!("Connecting to database...");
     let db = PgPoolOptions::new()
         .max_connections(20)
         .after_connect(|conn, _meta| Box::pin(async move {
@@ -14,13 +19,17 @@ async fn main() -> anyhow::Result<()> {
             conn.execute("CREATE SCHEMA IF NOT EXISTS teithetsskalaen;").await?;
             Ok(())
         }))
-        .connect(&database_url)
+        .connect(&config.database_url)
         .await
-        .context("failed to connect to DATABASE_URL").expect("Failed to connect to database");
+        .context("failed to connect to DATABASE_URL")?;
 
-    sqlx::migrate!().run(&db).await.expect("Migration failed");
+    let before_migrations = Instant::now();
+    println!("Running migrations...");
+    sqlx::migrate!().run(&db).await?;
+    println!(
+        "Migrations completed successfully in {}ms",
+        before_migrations.elapsed().as_millis()
+    );
 
-    println!("Hello my fancy database");
-
-    Ok(())
+    app::serve(config).await
 }
