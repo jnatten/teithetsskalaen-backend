@@ -1,14 +1,14 @@
 mod teithet;
 
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{FromRow, PgPool};
 use time::PrimitiveDateTime;
 
 pub struct Repository {
     db: PgPool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, FromRow)]
 pub struct Teithet {
     id: i64,
     title: String,
@@ -26,8 +26,7 @@ impl Repository {
         title: String,
         description: String,
     ) -> anyhow::Result<Teithet> {
-        let teithet = sqlx::query_as!(
-            Teithet,
+        let teithet = sqlx::query_as(
             r#"
                 with inserted_teithet as (
                     insert into teithet(title, description)
@@ -37,9 +36,9 @@ impl Repository {
                 select id, title, description, created_at
                 from inserted_teithet
             "#,
-            title,
-            description,
         )
+        .bind(title)
+        .bind(description)
         .fetch_one(&self.db)
         .await?;
 
