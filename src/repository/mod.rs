@@ -10,10 +10,10 @@ pub struct Repository {
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct Teithet {
-    id: i64,
-    title: String,
-    description: String,
-    created_at: PrimitiveDateTime,
+    pub id: i64,
+    pub title: String,
+    pub description: String,
+    pub created_at: PrimitiveDateTime,
 }
 
 impl Repository {

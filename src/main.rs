@@ -1,12 +1,14 @@
 mod app;
 mod config;
+mod controller;
 mod error;
+mod model;
 mod repository;
+mod service;
 
 pub use self::error::Error;
 use anyhow::Context;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::Executor;
 use std::time::Instant;
 
 #[tokio::main]
