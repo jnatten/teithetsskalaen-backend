@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::repository::Repository;
+use crate::service::read_service::ReadService;
 use crate::service::write_service::WriteService;
 use crate::Error;
 use axum::Router;
@@ -9,10 +10,12 @@ use tower_http::trace::TraceLayer;
 
 pub async fn serve(config: Config, db: PgPool) -> anyhow::Result<()> {
     let repository = Arc::new(Repository::new(db));
+    let read_service = Arc::new(ReadService::new(repository.clone()));
     let write_service = Arc::new(WriteService::new(repository.clone()));
 
     let state = Arc::new(AppState {
         repository,
+        read_service,
         write_service,
     });
 
@@ -30,7 +33,8 @@ pub async fn serve(config: Config, db: PgPool) -> anyhow::Result<()> {
 
 pub struct AppState {
     pub repository: Arc<Repository>,
+    pub read_service: Arc<ReadService>,
     pub write_service: Arc<WriteService>,
 }
 
-pub type ApiResult<T, E = Error> = ::std::result::Result<T, E>;
+pub type ApiResult<T, E = Error> = Result<T, E>;

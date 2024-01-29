@@ -44,4 +44,19 @@ impl Repository {
 
         Ok(teithet)
     }
+
+    pub async fn get_teithet(&self, id: i64) -> anyhow::Result<Teithet> {
+        let teithet = sqlx::query_as(
+            r#"
+                select id, title, description, created_at
+                from teithet
+                where id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_one(&self.db)
+        .await?;
+
+        Ok(teithet)
+    }
 }
