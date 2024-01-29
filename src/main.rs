@@ -10,13 +10,23 @@ pub use self::error::Error;
 use anyhow::Context;
 use sqlx::postgres::PgPoolOptions;
 use std::time::Instant;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    println!("Starting teithetsskalaen-backend");
+    tracing::info!("Starting teithetsskalaen-backend");
     let config = config::Config::from_env()?;
 
-    println!("Connecting to database...");
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                "teithetsskalaen_backend=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    tracing::info!("Connecting to database...");
     let db = PgPoolOptions::new()
         .max_connections(20)
         // TODO: This works but sqlx wont compile our queries with it
@@ -33,9 +43,9 @@ async fn main() -> anyhow::Result<()> {
         .context("failed to connect to DATABASE_URL")?;
 
     let before_migrations = Instant::now();
-    println!("Running migrations...");
+    tracing::info!("Running migrations...");
     sqlx::migrate!().run(&db).await?;
-    println!(
+    tracing::info!(
         "Migrations completed successfully in {}ms",
         before_migrations.elapsed().as_millis()
     );

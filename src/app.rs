@@ -5,6 +5,7 @@ use crate::Error;
 use axum::Router;
 use sqlx::PgPool;
 use std::sync::Arc;
+use tower_http::trace::TraceLayer;
 
 pub async fn serve(config: Config, db: PgPool) -> anyhow::Result<()> {
     let repository = Arc::new(Repository::new(db));
@@ -17,10 +18,11 @@ pub async fn serve(config: Config, db: PgPool) -> anyhow::Result<()> {
 
     let app = Router::new()
         .nest("/teithet", crate::controller::teithet::router())
-        .with_state(state);
+        .with_state(state)
+        .layer(TraceLayer::new_for_http());
 
     let address = format!("0.0.0.0:{}", config.port);
-    println!("Serving application on {}", address);
+    tracing::info!("Serving application on {}", address);
     let listener = tokio::net::TcpListener::bind(address).await?;
     axum::serve(listener, app).await?;
     Ok(())
