@@ -17,15 +17,15 @@ async fn main() -> anyhow::Result<()> {
     println!("Connecting to database...");
     let db = PgPoolOptions::new()
         .max_connections(20)
-        .after_connect(|conn, _meta| {
-            Box::pin(async move {
-                // TODO: This works but sqlx wont compile our queries with it
-                //       We need to find a workaround for that, or just not use schemas...
-                // conn.execute("SET application_name = 'teithetsskalaen'; SET search_path = 'teithetsskalaen';").await?;
-                // conn.execute("CREATE SCHEMA IF NOT EXISTS teithetsskalaen;").await?;
-                Ok(())
-            })
-        })
+        // TODO: This works but sqlx wont compile our queries with it
+        //       We need to find a workaround for that, or just not use schemas...
+        // .after_connect(|conn, _meta| {
+        //     Box::pin(async move {
+        //         conn.execute("SET application_name = 'teithetsskalaen'; SET search_path = 'teithetsskalaen';").await?;
+        //         conn.execute("CREATE SCHEMA IF NOT EXISTS teithetsskalaen;").await?;
+        //         Ok(())
+        //     })
+        // })
         .connect(&config.database_url)
         .await
         .context("failed to connect to DATABASE_URL")?;
